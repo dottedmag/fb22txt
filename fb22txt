@@ -1,0 +1,36 @@
+#!/usr/bin/python
+
+import sys
+import xml.sax
+
+BODY = ("http://www.gribuser.ru/xml/fictionbook/2.0", "body")
+
+class FB2Handler(xml.sax.ContentHandler):
+    def __init__(self):
+        self.in_body = False
+    def startElementNS(self, name, qname, attrs):
+        if name == BODY:
+            self.in_body = True
+    def endElementNS(self, name, qname):
+        if name == BODY:
+            self.in_body = False
+    def characters(self, content):
+        if self.in_body:
+            sys.stdout.write(content.encode('UTF-8'))
+
+def main():
+    try:
+        parser = xml.sax.make_parser()
+        parser.setContentHandler(FB2Handler())
+        parser.setFeature(xml.sax.handler.feature_namespaces, True)
+        parser.parse(sys.stdin)
+    except xml.sax.SAXParseException, e:
+        sys.stderr.write('Unable to parse FB2 document: ' + str(e))
+        sys.exit(1)
+
+if __name__ == '__main__':
+    if len(sys.argv) != 1:
+        sys.stderr.write('Usage: fb22txt < fb2file > txtfile\n')
+        sys.exit(2)
+    main()
+
